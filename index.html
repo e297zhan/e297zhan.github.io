@@ -145,6 +145,7 @@
                         const attendedLi = document.createElement('li');
                         const { time, location } = attendance[grade][student];
                         attendedLi.textContent = `${student} - 签到时间: ${time} - 签到地点: ${location}`;
+                        attendedLi.classList.add('attended'); // 添加样式
                         gradeAttendanceList.appendChild(attendedLi);
                         li.style.backgroundColor = '#d4edda'; // 显示为已签到的状态
                         li.remove(); // 从未签到列表移除
