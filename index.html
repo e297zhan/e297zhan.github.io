@@ -141,9 +141,10 @@
                     gradeList.appendChild(li);
 
                     // 如果学生已经签到，移动到已签到列表
-                    if (attendance[grade] && attendance[grade].includes(student)) {
+                    if (attendance[grade] && attendance[grade][student]) {
                         const attendedLi = document.createElement('li');
-                        attendedLi.textContent = `${student} - 已签到`;
+                        const { time, location } = attendance[grade][student];
+                        attendedLi.textContent = `${student} - 签到时间: ${time} - 签到地点: ${location}`;
                         gradeAttendanceList.appendChild(attendedLi);
                         li.style.backgroundColor = '#d4edda'; // 显示为已签到的状态
                         li.remove(); // 从未签到列表移除
@@ -162,14 +163,16 @@
         document.getElementById('attendanceForm').addEventListener('submit', function(event) {
             event.preventDefault();
             const studentName = document.getElementById('studentName').value.trim();
+            const currentTime = new Date().toLocaleTimeString();
+            const location = "北京汇贤学校"; // 设置签到地点
 
             let found = false;
             for (let grade in studentsByGrade) {
-                if (studentsByGrade[grade].includes(studentName) && !(attendance[grade] && attendance[grade].includes(studentName))) {
+                if (studentsByGrade[grade].includes(studentName) && !(attendance[grade] && attendance[grade][studentName])) {
                     if (!attendance[grade]) {
-                        attendance[grade] = [];
+                        attendance[grade] = {};
                     }
-                    attendance[grade].push(studentName);
+                    attendance[grade][studentName] = { time: currentTime, location };
 
                     // 从未签到列表中移除已签到学生
                     const studentItem = document.getElementById(`${translateGrade(grade)}-${studentName}`);
@@ -180,7 +183,7 @@
                     // 将该学生加入已签到列表
                     const gradeAttendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
                     const li = document.createElement('li');
-                    li.textContent = `${studentName} - 已签到`;
+                    li.textContent = `${studentName} - 签到时间: ${currentTime} - 签到地点: ${location}`;
                     gradeAttendanceList.appendChild(li);
 
                     saveAttendanceToLocalStorage(); // 保存到 localStorage
