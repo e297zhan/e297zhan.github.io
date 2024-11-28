@@ -99,24 +99,59 @@
 
     <script>
         const studentsByGrade = {
-            '九年级': ["杨晓洋 Inmen", "崔真豪 Anthony", "房晚婷 Winerney","方子玥 Feya","李泽宇 Robert","朱士琦 Alex"],
-            '十年级': ["闫若妤", "沈子琦 Jason","黄粲雯 crystal","刘奕孜 linda","夏惟一 Eva","杨思嘉 Sky","苏楚涵 Cheron","荀梦涵 Angelina","任锦仪 Nina","卢戴暄 Betty","卢爱暄 Cynthia","张楚妤 Nancy","谢坦怀 Geer"],
-            '十一年级': ["陈科好 Tracy", "侯一诚 Finn","宗亚歆 Yaxin","曾孟荀 Raina","艾心 Lily"],
-            '十二年级': ["杨子沫 Chole", "吕佳欣 Mickley","颜培裕熙 Lucky"]
+            '九年级': ["杨晓洋 Inmen", "崔真豪 Anthony", "房晚婷 Winerney", "方子玥 Feya", "李泽宇 Robert", "朱士琦 Alex"],
+            '十年级': ["闫若妤", "沈子琦 Jason", "黄粲雯 Crystal", "刘奕孜 Linda", "夏惟一 Eva", "杨思嘉 Sky", "苏楚涵 Cheron", "荀梦涵 Angelina", "任锦仪 Nina", "卢戴暄 Betty", "卢爱暄 Cynthia", "张楚妤 Nancy", "谢坦怀 Geer"],
+            '十一年级': ["陈科好 Tracy", "侯一诚 Finn", "宗亚歆 Yaxin", "曾孟荀 Raina", "艾心 Lily"],
+            '十二年级': ["杨子沫 Chole", "吕佳欣 Mickley", "颜培裕熙 Lucky"]
         };
 
-        const attendance = {};
+        // 从 sessionStorage 获取签到数据
+        function getAttendanceFromSessionStorage() {
+            try {
+                const data = sessionStorage.getItem('attendanceData');
+                return data ? JSON.parse(data) : {};
+            } catch (e) {
+                console.error('Error loading from sessionStorage:', e);
+                return {};
+            }
+        }
 
+        // 保存签到数据到 sessionStorage
+        function saveAttendanceToSessionStorage() {
+            try {
+                sessionStorage.setItem('attendanceData', JSON.stringify(attendance));
+                console.log('Attendance data saved to sessionStorage.');
+            } catch (e) {
+                console.error('Error saving to sessionStorage:', e);
+            }
+        }
+
+        // 初始化签到数据
+        const attendance = getAttendanceFromSessionStorage();
+
+        // 初始化学生列表
         function initializeStudentsList() {
             for (let grade in studentsByGrade) {
                 const gradeList = document.getElementById(`${translateGrade(grade)}List`);
+                const gradeAttendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
+                
                 studentsByGrade[grade].forEach(student => {
                     const li = document.createElement('li');
                     li.textContent = student;
                     li.id = `${translateGrade(grade)}-${student}`;
                     gradeList.appendChild(li);
+
+                    // 如果学生已经签到，移动到已签到列表
+                    if (attendance[grade] && attendance[grade][student]) {
+                        const attendedLi = document.createElement('li');
+                        const { time, location } = attendance[grade][student];
+                        attendedLi.textContent = `${student} - 签到时间: ${time} - 签到地点: ${location}`;
+                        attendedLi.classList.add('attended'); // 添加样式
+                        gradeAttendanceList.appendChild(attendedLi);
+                        li.style.backgroundColor = '#d4edda'; // 显示为已签到的状态
+                        li.remove(); // 从未签到列表移除
+                    }
                 });
-                attendance[grade] = [];
             }
         }
 
@@ -126,56 +161,48 @@
                    grade === '十一年级' ? 'grade11' : 'grade12';
         }
 
-        async function getPublicIP() {
-            try {
-                const response = await fetch('https://ip-api.com/json');
-                const data = await response.json();
-                if (data.status === "fail") {
-                    throw new Error("无法获取 IP 地址");
-                }
-                return data.query;  // 返回获取的 IP 地址
-            } catch (error) {
-                console.error("获取 IP 地址失败:", error);
-                return null;  // 返回 null 表示获取失败
-            }
-        }
-
-        document.getElementById('attendanceForm').addEventListener('submit', async function(event) {
+        // 提交签到
+        document.getElementById('attendanceForm').addEventListener('submit', function(event) {
             event.preventDefault();
             const studentName = document.getElementById('studentName').value.trim();
-
-            // 获取 IP 地址
-            const ip = await getPublicIP();
-            if (!ip) {
-                alert("无法获取 IP 地址，签到失败！");
-                return;
-            }
+            const currentTime = new Date().toLocaleTimeString();
+            const location = "北京汇贤学校"; // 设置签到地点
 
             let found = false;
             for (let grade in studentsByGrade) {
-                if (studentsByGrade[grade].includes(studentName) && !attendance[grade].includes(studentName)) {
-                    attendance[grade].push(studentName);
+                if (studentsByGrade[grade].includes(studentName) && !(attendance[grade] && attendance[grade][studentName])) {
+                    attendance[grade] = attendance[grade] || {};
+                    attendance[grade][studentName] = { time: currentTime, location };
 
-                    const studentItem = document.getElementById(`${translateGrade(grade)}-${studentName}`);
-                    if (studentItem) studentItem.remove();
+                    // 更新页面
+                    const gradeList = document.getElementById(`${translateGrade(grade)}List`);
+                    const gradeAttendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
 
-                    const attendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
-                    const li = document.createElement('li');
-                    const currentTime = new Date().toLocaleTimeString();
-                    li.textContent = `${studentName} - ${currentTime} - ${ip} - 北京汇贤学校`;
-                    attendanceList.appendChild(li);
+                    const li = document.getElementById(`${translateGrade(grade)}-${studentName}`);
+                    if (li) {
+                        li.remove(); // 从未签到列表移除
+                    }
+
+                    const attendedLi = document.createElement('li');
+                    attendedLi.textContent = `${studentName} - 签到时间: ${currentTime} - 签到地点: ${location}`;
+                    attendedLi.classList.add('attended');
+                    gradeAttendanceList.appendChild(attendedLi);
+
+                    saveAttendanceToSessionStorage(); // 保存到 sessionStorage
                     found = true;
                     break;
                 }
             }
+
             if (!found) {
-                alert("学生不存在或已经签到！");
+                alert("未找到该学生或该学生已签到！");
             }
-            document.getElementById('studentName').value = '';
+
+            document.getElementById('studentName').value = ''; // 清空输入框
         });
 
+        // 初始化页面
         initializeStudentsList();
     </script>
-
 </body>
 </html>
