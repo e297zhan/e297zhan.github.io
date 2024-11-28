@@ -169,11 +169,12 @@
         }
 
         // 获取学生的 IP 地址
-  async function getPublicIP() {
-    const response = await fetch('http://ip-api.com/json');
+async function getPublicIP() {
+    const response = await fetch('https://ip-api.com/json');
     const data = await response.json();
-    return data.query;  // IP 地址通常在 'query' 字段中
+    return data.query;  // 返回 IP 地址
 }
+
 
         // 监听表单提交
         document.getElementById('attendanceForm').addEventListener('submit', function(event) {
