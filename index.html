@@ -105,7 +105,7 @@
             '十二年级': ["杨子沫 Chole", "吕佳欣 Mickley","颜培裕熙 Lucky"]
         };
 
-        const attendance = {};
+        let attendance = JSON.parse(localStorage.getItem('attendance')) || {};
 
         function initializeStudentsList() {
             for (let grade in studentsByGrade) {
@@ -116,8 +116,13 @@
                     li.id = `${translateGrade(grade)}-${student}`;
                     gradeList.appendChild(li);
                 });
-                attendance[grade] = [];
+
+                // Initialize attendance data for this grade if it doesn't exist in localStorage
+                if (!attendance[grade]) {
+                    attendance[grade] = [];
+                }
             }
+            renderAttendance();
         }
 
         function translateGrade(grade) {
@@ -126,11 +131,26 @@
                    grade === '十一年级' ? 'grade11' : 'grade12';
         }
 
-        // 获取公共 IP 地址
+        // 渲染已签到学生
+        function renderAttendance() {
+            for (let grade in attendance) {
+                const attendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
+                const gradeList = attendance[grade];
+
+                // 清空之前的记录
+                attendanceList.innerHTML = '';
+                gradeList.forEach(record => {
+                    const li = document.createElement('li');
+                    li.textContent = `${record.studentName} - ${record.time} - 北京汇贤学校 - IP: ${record.ip}`;
+                    attendanceList.appendChild(li);
+                });
+            }
+        }
+
         async function getPublicIP() {
             const response = await fetch('https://api.ipify.org?format=json');
             const data = await response.json();
-            return data.ip; // 返回公共 IP 地址
+            return data.ip;
         }
 
         document.getElementById('attendanceForm').addEventListener('submit', function(event) {
@@ -139,19 +159,20 @@
 
             let found = false;
             for (let grade in studentsByGrade) {
-                if (studentsByGrade[grade].includes(studentName) && !attendance[grade].includes(studentName)) {
-                    attendance[grade].push(studentName);
-
-                    const studentItem = document.getElementById(`${translateGrade(grade)}-${studentName}`);
-                    if (studentItem) studentItem.remove();
-
-                    // 获取公共 IP 地址并添加到签到记录中
+                if (studentsByGrade[grade].includes(studentName) && !attendance[grade].some(record => record.studentName === studentName)) {
                     getPublicIP().then(ip => {
-                        const attendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
-                        const li = document.createElement('li');
                         const currentTime = new Date().toLocaleTimeString();
-                        li.textContent = `${studentName} - ${currentTime} - 北京汇贤学校 - IP: ${ip}`;
-                        attendanceList.appendChild(li);
+                        const record = { studentName, time: currentTime, ip };
+
+                        // 保存签到数据
+                        attendance[grade].push(record);
+                        localStorage.setItem('attendance', JSON.stringify(attendance));
+
+                        // 更新界面
+                        const studentItem = document.getElementById(`${translateGrade(grade)}-${studentName}`);
+                        if (studentItem) studentItem.remove();
+
+                        renderAttendance();
                     }).catch(error => {
                         alert('无法获取IP地址，签到失败。');
                     });
