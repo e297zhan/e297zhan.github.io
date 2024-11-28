@@ -106,7 +106,12 @@
         };
 
         // 从 sessionStorage 获取存储的签到数据
-        let attendance = JSON.parse(sessionStorage.getItem('attendance')) || {};
+        let attendance = JSON.parse(sessionStorage.getItem('attendance')) || {
+            '九年级': [],
+            '十年级': [],
+            '十一年级': [],
+            '十二年级': []
+        };
 
         // 初始化学生名单
         function initializeStudentsList() {
