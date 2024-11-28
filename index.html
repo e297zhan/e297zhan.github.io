@@ -105,25 +105,50 @@
             '十二年级': ["杨子沫 Chole", "吕佳欣 Mickley", "颜培裕熙 Lucky"]
         };
 
-        const attendance = {
-            '九年级': [],
-            '十年级': [],
-            '十一年级': [],
-            '十二年级': []
-        };
+        // 从 localStorage 获取签到数据
+        function getAttendanceFromLocalStorage() {
+            try {
+                const data = JSON.parse(localStorage.getItem('attendanceData'));
+                return data || {};
+            } catch (e) {
+                console.error('Error loading from localStorage:', e);
+                return {};
+            }
+        }
 
-        // 初始化页面
+        // 保存签到数据到 localStorage
+        function saveAttendanceToLocalStorage() {
+            try {
+                localStorage.setItem('attendanceData', JSON.stringify(attendance));
+                console.log('Attendance data saved to localStorage.');
+            } catch (e) {
+                console.error('Error saving to localStorage:', e);
+            }
+        }
+
+        const attendance = getAttendanceFromLocalStorage();
+
+        // 初始化学生列表
         function initializeStudentsList() {
             for (let grade in studentsByGrade) {
                 const gradeList = document.getElementById(`${translateGrade(grade)}List`);
+                const gradeAttendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
+                
                 studentsByGrade[grade].forEach(student => {
                     const li = document.createElement('li');
                     li.textContent = student;
                     li.id = `${translateGrade(grade)}-${student}`;
                     gradeList.appendChild(li);
+
+                    // 如果学生已经签到，移动到已签到列表
+                    if (attendance[grade] && attendance[grade].includes(student)) {
+                        const attendedLi = document.createElement('li');
+                        attendedLi.textContent = `${student} - 已签到`;
+                        gradeAttendanceList.appendChild(attendedLi);
+                        li.style.backgroundColor = '#d4edda'; // 显示为已签到的状态
+                    }
                 });
             }
-            loadAttendanceFromLocalStorage();  // 从 LocalStorage 加载数据
         }
 
         function translateGrade(grade) {
@@ -139,57 +164,31 @@
 
             let found = false;
             for (let grade in studentsByGrade) {
-                if (studentsByGrade[grade].includes(studentName) && !attendance[grade].includes(studentName)) {
+                if (studentsByGrade[grade].includes(studentName) && !(attendance[grade] && attendance[grade].includes(studentName))) {
+                    if (!attendance[grade]) {
+                        attendance[grade] = [];
+                    }
                     attendance[grade].push(studentName);
                     const studentItem = document.getElementById(`${translateGrade(grade)}-${studentName}`);
                     if (studentItem) studentItem.remove();
 
-                    const attendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
+                    const gradeAttendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
                     const li = document.createElement('li');
-                    const currentTime = new Date().toLocaleTimeString();
-                    li.textContent = `${studentName} - ${currentTime}`;
-                    attendanceList.appendChild(li);
+                    li.textContent = `${studentName} - 已签到`;
+                    gradeAttendanceList.appendChild(li);
+
+                    saveAttendanceToLocalStorage(); // 保存到 localStorage
                     found = true;
-                    saveAttendanceToLocalStorage(); // 保存到 LocalStorage
                     break;
                 }
             }
+
             if (!found) {
                 alert("学生不存在或已经签到！");
             }
+
             document.getElementById('studentName').value = '';
         });
-
-        // 保存数据到 LocalStorage
-        function saveAttendanceToLocalStorage() {
-            try {
-                localStorage.setItem('attendanceData', JSON.stringify(attendance));
-                console.log('Attendance data saved to localStorage.');
-            } catch (e) {
-                console.error('Error saving to localStorage:', e);
-            }
-        }
-
-        // 从 LocalStorage 加载数据
-        function loadAttendanceFromLocalStorage() {
-            try {
-                const data = JSON.parse(localStorage.getItem('attendanceData'));
-                if (data) {
-                    for (let grade in data) {
-                        data[grade].forEach(student => {
-                            const gradeAttendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
-                            const li = document.createElement('li');
-                            const currentTime = new Date().toLocaleTimeString();
-                            li.textContent = `${student} - ${currentTime}`;
-                            gradeAttendanceList.appendChild(li);
-                        });
-                    }
-                    console.log('Attendance data loaded from localStorage.');
-                }
-            } catch (e) {
-                console.error('Error loading from localStorage:', e);
-            }
-        }
 
         // 页面加载时初始化学生列表
         window.onload = initializeStudentsList;
