@@ -105,7 +105,12 @@
             '十二年级': ["杨子沫 Chole", "吕佳欣 Mickley", "颜培裕熙 Lucky"]
         };
 
-        const attendance = {};
+        const attendance = {
+            '九年级': [],
+            '十年级': [],
+            '十一年级': [],
+            '十二年级': []
+        };
 
         // 初始化页面
         function initializeStudentsList() {
@@ -117,7 +122,6 @@
                     li.id = `${translateGrade(grade)}-${student}`;
                     gradeList.appendChild(li);
                 });
-                attendance[grade] = [];
             }
             loadAttendanceFromLocalStorage();  // 从 LocalStorage 加载数据
         }
@@ -159,11 +163,7 @@
         // 保存数据到 LocalStorage
         function saveAttendanceToLocalStorage() {
             try {
-                const today = new Date().toISOString().split('T')[0];  // 获取当前日期（格式：YYYY-MM-DD）
-                localStorage.setItem('attendanceData', JSON.stringify({
-                    attendance: attendance,
-                    date: today
-                }));
+                localStorage.setItem('attendanceData', JSON.stringify(attendance));
                 console.log('Attendance data saved to localStorage.');
             } catch (e) {
                 console.error('Error saving to localStorage:', e);
@@ -175,5 +175,24 @@
             try {
                 const data = JSON.parse(localStorage.getItem('attendanceData'));
                 if (data) {
-                    const today = new Date().toISOString().split('T')[0];  // 获取当前日期
-                    if (data.date === today) {
+                    for (let grade in data) {
+                        data[grade].forEach(student => {
+                            const gradeAttendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
+                            const li = document.createElement('li');
+                            const currentTime = new Date().toLocaleTimeString();
+                            li.textContent = `${student} - ${currentTime}`;
+                            gradeAttendanceList.appendChild(li);
+                        });
+                    }
+                    console.log('Attendance data loaded from localStorage.');
+                }
+            } catch (e) {
+                console.error('Error loading from localStorage:', e);
+            }
+        }
+
+        // 页面加载时初始化学生列表
+        window.onload = initializeStudentsList;
+    </script>
+</body>
+</html>
