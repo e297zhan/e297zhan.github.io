@@ -105,15 +105,8 @@
             '十二年级': ["杨子沫 Chole", "吕佳欣 Mickley","颜培裕熙 Lucky"]
         };
 
-        // 从 sessionStorage 获取存储的签到数据
-        let attendance = JSON.parse(sessionStorage.getItem('attendance')) || {
-            '九年级': [],
-            '十年级': [],
-            '十一年级': [],
-            '十二年级': []
-        };
+        const attendance = {};
 
-        // 初始化学生名单
         function initializeStudentsList() {
             for (let grade in studentsByGrade) {
                 const gradeList = document.getElementById(`${translateGrade(grade)}List`);
@@ -123,111 +116,54 @@
                     li.id = `${translateGrade(grade)}-${student}`;
                     gradeList.appendChild(li);
                 });
-
-                // 如果没有签到记录，初始化为空数组
-                if (!attendance[grade]) {
-                    attendance[grade] = [];
-                }
+                attendance[grade] = [];
             }
-            renderAttendance();
         }
 
-        // 转换年级名称为对应的 id
         function translateGrade(grade) {
             return grade === '九年级' ? 'grade9' :
                    grade === '十年级' ? 'grade10' :
                    grade === '十一年级' ? 'grade11' : 'grade12';
         }
 
-        // 渲染已签到的学生
-        function renderAttendance() {
-            for (let grade in attendance) {
-                const attendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
-                const gradeList = attendance[grade];
-
-                // 清空之前的记录
-                attendanceList.innerHTML = '';
-                gradeList.forEach(record => {
-                    const li = document.createElement('li');
-                    li.textContent = `${record.studentName} - ${record.time} - 北京汇贤学校 - IP: ${record.ip}`;
-                    attendanceList.appendChild(li);
-                });
-
-                // 更新未签到学生列表
-                const gradeListElement = document.getElementById(`${translateGrade(grade)}List`);
-                gradeListElement.innerHTML = '';
-                studentsByGrade[grade].forEach(student => {
-                    // 如果学生没有签到，重新添加到未签到学生列表
-                    if (!attendance[grade].some(record => record.studentName === student)) {
-                        const li = document.createElement('li');
-                        li.textContent = student;
-                        li.id = `${translateGrade(grade)}-${student}`;
-                        gradeListElement.appendChild(li);
-                    }
-                });
+        async function getPublicIP() {
+            try {
+                const response = await fetch('https://ip-api.com/json');
+                const data = await response.json();
+                if (data.status === "fail") {
+                    throw new Error("无法获取 IP 地址");
+                }
+                return data.query;  // 返回获取的 IP 地址
+            } catch (error) {
+                console.error("获取 IP 地址失败:", error);
+                return null;  // 返回 null 表示获取失败
             }
         }
 
-        // 获取学生的 IP 地址
-document.getElementById('attendanceForm').addEventListener('submit', async function(event) {
-    event.preventDefault();
-    const studentName = document.getElementById('studentName').value.trim();
-
-    // 获取 IP 地址
-    const ip = await getPublicIP();
-    if (!ip) {
-        alert("无法获取 IP 地址，签到失败！");
-        return;
-    }
-
-    let found = false;
-    for (let grade in studentsByGrade) {
-        if (studentsByGrade[grade].includes(studentName) && !attendance[grade].includes(studentName)) {
-            attendance[grade].push(studentName);
-
-            const studentItem = document.getElementById(`${translateGrade(grade)}-${studentName}`);
-            if (studentItem) studentItem.remove();
-
-            const attendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
-            const li = document.createElement('li');
-            const currentTime = new Date().toLocaleTimeString();
-            li.textContent = `${studentName} - ${currentTime} - ${ip} - 北京汇贤学校`;
-            attendanceList.appendChild(li);
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
-        alert("学生不存在或已经签到！");
-    }
-    document.getElementById('studentName').value = '';
-});
-
-        // 监听表单提交
-        document.getElementById('attendanceForm').addEventListener('submit', function(event) {
+        document.getElementById('attendanceForm').addEventListener('submit', async function(event) {
             event.preventDefault();
             const studentName = document.getElementById('studentName').value.trim();
 
+            // 获取 IP 地址
+            const ip = await getPublicIP();
+            if (!ip) {
+                alert("无法获取 IP 地址，签到失败！");
+                return;
+            }
+
             let found = false;
             for (let grade in studentsByGrade) {
-                if (studentsByGrade[grade].includes(studentName) && !attendance[grade].some(record => record.studentName === studentName)) {
-                    getPublicIP().then(ip => {
-                        const currentTime = new Date().toLocaleTimeString();
-                        const record = { studentName, time: currentTime, ip };
+                if (studentsByGrade[grade].includes(studentName) && !attendance[grade].includes(studentName)) {
+                    attendance[grade].push(studentName);
 
-                        // 保存签到数据
-                        attendance[grade].push(record);
-                        sessionStorage.setItem('attendance', JSON.stringify(attendance));
+                    const studentItem = document.getElementById(`${translateGrade(grade)}-${studentName}`);
+                    if (studentItem) studentItem.remove();
 
-                        // 更新界面，移除未签到的学生
-                        const studentItem = document.getElementById(`${translateGrade(grade)}-${studentName}`);
-                        if (studentItem) studentItem.remove();
-
-                        renderAttendance();
-                    }).catch(error => {
-                        alert('无法获取IP地址，签到失败。');
-                    });
-
+                    const attendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
+                    const li = document.createElement('li');
+                    const currentTime = new Date().toLocaleTimeString();
+                    li.textContent = `${studentName} - ${currentTime} - ${ip} - 北京汇贤学校`;
+                    attendanceList.appendChild(li);
                     found = true;
                     break;
                 }
@@ -238,7 +174,6 @@ document.getElementById('attendanceForm').addEventListener('submit', async funct
             document.getElementById('studentName').value = '';
         });
 
-        // 初始化学生列表和签到数据
         initializeStudentsList();
     </script>
 
