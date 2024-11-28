@@ -169,9 +169,14 @@
                         attendance[grade] = [];
                     }
                     attendance[grade].push(studentName);
-                    const studentItem = document.getElementById(`${translateGrade(grade)}-${studentName}`);
-                    if (studentItem) studentItem.remove();
 
+                    // 从未签到列表中移除已签到学生
+                    const studentItem = document.getElementById(`${translateGrade(grade)}-${studentName}`);
+                    if (studentItem) {
+                        studentItem.remove();
+                    }
+
+                    // 将该学生加入已签到列表
                     const gradeAttendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
                     const li = document.createElement('li');
                     li.textContent = `${studentName} - 已签到`;
