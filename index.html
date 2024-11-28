@@ -105,29 +105,29 @@
             '十二年级': ["杨子沫 Chole", "吕佳欣 Mickley", "颜培裕熙 Lucky"]
         };
 
-        // 从 localStorage 获取签到数据
-        function getAttendanceFromLocalStorage() {
+        // 从 sessionStorage 获取签到数据
+        function getAttendanceFromSessionStorage() {
             try {
-                const data = localStorage.getItem('attendanceData');
+                const data = sessionStorage.getItem('attendanceData');
                 return data ? JSON.parse(data) : {};
             } catch (e) {
-                console.error('Error loading from localStorage:', e);
+                console.error('Error loading from sessionStorage:', e);
                 return {};
             }
         }
 
-        // 保存签到数据到 localStorage
-        function saveAttendanceToLocalStorage() {
+        // 保存签到数据到 sessionStorage
+        function saveAttendanceToSessionStorage() {
             try {
-                localStorage.setItem('attendanceData', JSON.stringify(attendance));
-                console.log('Attendance data saved to localStorage.');
+                sessionStorage.setItem('attendanceData', JSON.stringify(attendance));
+                console.log('Attendance data saved to sessionStorage.');
             } catch (e) {
-                console.error('Error saving to localStorage:', e);
+                console.error('Error saving to sessionStorage:', e);
             }
         }
 
         // 初始化签到数据
-        const attendance = getAttendanceFromLocalStorage();
+        const attendance = getAttendanceFromSessionStorage();
 
         // 初始化学生列表
         function initializeStudentsList() {
@@ -171,31 +171,31 @@
             let found = false;
             for (let grade in studentsByGrade) {
                 if (studentsByGrade[grade].includes(studentName) && !(attendance[grade] && attendance[grade][studentName])) {
-                    if (!attendance[grade]) {
-                        attendance[grade] = {};
-                    }
+                    attendance[grade] = attendance[grade] || {};
                     attendance[grade][studentName] = { time: currentTime, location };
 
-                    // 从未签到列表中移除已签到学生
-                    const studentItem = document.getElementById(`${translateGrade(grade)}-${studentName}`);
-                    if (studentItem) {
-                        studentItem.remove();
+                    // 更新页面
+                    const gradeList = document.getElementById(`${translateGrade(grade)}List`);
+                    const gradeAttendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
+
+                    const li = document.getElementById(`${translateGrade(grade)}-${studentName}`);
+                    if (li) {
+                        li.remove(); // 从未签到列表移除
                     }
 
-                    // 将该学生加入已签到列表
-                    const gradeAttendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
-                    const li = document.createElement('li');
-                    li.textContent = `${studentName} - 签到时间: ${currentTime} - 签到地点: ${location}`;
-                    gradeAttendanceList.appendChild(li);
+                    const attendedLi = document.createElement('li');
+                    attendedLi.textContent = `${studentName} - 签到时间: ${currentTime} - 签到地点: ${location}`;
+                    attendedLi.classList.add('attended');
+                    gradeAttendanceList.appendChild(attendedLi);
 
-                    saveAttendanceToLocalStorage(); // 保存到 localStorage
+                    saveAttendanceToSessionStorage(); // 保存到 sessionStorage
                     found = true;
                     break;
                 }
             }
 
             if (!found) {
-                alert("学生不存在或已经签到！");
+                alert("未找到该学生或该学生已签到！");
             }
 
             document.getElementById('studentName').value = ''; // 清空输入框
@@ -204,6 +204,5 @@
         // 初始化页面
         initializeStudentsList();
     </script>
-
 </body>
 </html>
