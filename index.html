@@ -146,6 +146,7 @@
                         attendedLi.textContent = `${student} - 已签到`;
                         gradeAttendanceList.appendChild(attendedLi);
                         li.style.backgroundColor = '#d4edda'; // 显示为已签到的状态
+                        li.remove(); // 从未签到列表移除
                     }
                 });
             }
