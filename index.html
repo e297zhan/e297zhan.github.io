@@ -108,8 +108,8 @@
         // 从 localStorage 获取签到数据
         function getAttendanceFromLocalStorage() {
             try {
-                const data = JSON.parse(localStorage.getItem('attendanceData'));
-                return data || {};
+                const data = localStorage.getItem('attendanceData');
+                return data ? JSON.parse(data) : {};
             } catch (e) {
                 console.error('Error loading from localStorage:', e);
                 return {};
@@ -126,6 +126,7 @@
             }
         }
 
+        // 初始化签到数据
         const attendance = getAttendanceFromLocalStorage();
 
         // 初始化学生列表
@@ -197,11 +198,11 @@
                 alert("学生不存在或已经签到！");
             }
 
-            document.getElementById('studentName').value = '';
+            document.getElementById('studentName').value = ''; // 清空输入框
         });
 
-        // 页面加载时初始化学生列表
-        window.onload = initializeStudentsList;
+        // 初始化页面
+        initializeStudentsList();
     </script>
 
 </body>
