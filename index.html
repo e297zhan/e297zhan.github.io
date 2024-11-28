@@ -152,6 +152,19 @@
                     li.textContent = `${record.studentName} - ${record.time} - 北京汇贤学校 - IP: ${record.ip}`;
                     attendanceList.appendChild(li);
                 });
+
+                // 更新未签到学生列表
+                const gradeListElement = document.getElementById(`${translateGrade(grade)}List`);
+                gradeListElement.innerHTML = '';
+                studentsByGrade[grade].forEach(student => {
+                    // 如果学生没有签到，重新添加到未签到学生列表
+                    if (!attendance[grade].some(record => record.studentName === student)) {
+                        const li = document.createElement('li');
+                        li.textContent = student;
+                        li.id = `${translateGrade(grade)}-${student}`;
+                        gradeListElement.appendChild(li);
+                    }
+                });
             }
         }
 
@@ -178,7 +191,7 @@
                         attendance[grade].push(record);
                         sessionStorage.setItem('attendance', JSON.stringify(attendance));
 
-                        // 更新界面
+                        // 更新界面，移除未签到的学生
                         const studentItem = document.getElementById(`${translateGrade(grade)}-${studentName}`);
                         if (studentItem) studentItem.remove();
 
