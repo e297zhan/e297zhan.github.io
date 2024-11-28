@@ -99,14 +99,16 @@
 
     <script>
         const studentsByGrade = {
-          '九年级': ["杨晓洋 Inmen", "崔真豪 Anthony", "房晚婷 Winerney","方子玥 Feya","李泽宇 Robert","朱士琦 Alex"],
+            '九年级': ["杨晓洋 Inmen", "崔真豪 Anthony", "房晚婷 Winerney","方子玥 Feya","李泽宇 Robert","朱士琦 Alex"],
             '十年级': ["闫若妤", "沈子琦 Jason","黄粲雯 crystal","刘奕孜 linda","夏惟一 Eva","杨思嘉 Sky","苏楚涵 Cheron","荀梦涵 Angelina","任锦仪 Nina","卢戴暄 Betty","卢爱暄 Cynthia","张楚妤 Nancy","谢坦怀 Geer"],
             '十一年级': ["陈科好 Tracy", "侯一诚 Finn","宗亚歆 Yaxin","曾孟荀 Raina","艾心 Lily"],
             '十二年级': ["杨子沫 Chole", "吕佳欣 Mickley","颜培裕熙 Lucky"]
         };
 
-        let attendance = JSON.parse(localStorage.getItem('attendance')) || {};
+        // 从 sessionStorage 获取存储的签到数据
+        let attendance = JSON.parse(sessionStorage.getItem('attendance')) || {};
 
+        // 初始化学生名单
         function initializeStudentsList() {
             for (let grade in studentsByGrade) {
                 const gradeList = document.getElementById(`${translateGrade(grade)}List`);
@@ -117,7 +119,7 @@
                     gradeList.appendChild(li);
                 });
 
-                // Initialize attendance data for this grade if it doesn't exist in localStorage
+                // 如果没有签到记录，初始化为空数组
                 if (!attendance[grade]) {
                     attendance[grade] = [];
                 }
@@ -125,13 +127,14 @@
             renderAttendance();
         }
 
+        // 转换年级名称为对应的 id
         function translateGrade(grade) {
             return grade === '九年级' ? 'grade9' :
                    grade === '十年级' ? 'grade10' :
                    grade === '十一年级' ? 'grade11' : 'grade12';
         }
 
-        // 渲染已签到学生
+        // 渲染已签到的学生
         function renderAttendance() {
             for (let grade in attendance) {
                 const attendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
@@ -147,12 +150,14 @@
             }
         }
 
+        // 获取学生的 IP 地址
         async function getPublicIP() {
             const response = await fetch('https://api.ipify.org?format=json');
             const data = await response.json();
             return data.ip;
         }
 
+        // 监听表单提交
         document.getElementById('attendanceForm').addEventListener('submit', function(event) {
             event.preventDefault();
             const studentName = document.getElementById('studentName').value.trim();
@@ -166,7 +171,7 @@
 
                         // 保存签到数据
                         attendance[grade].push(record);
-                        localStorage.setItem('attendance', JSON.stringify(attendance));
+                        sessionStorage.setItem('attendance', JSON.stringify(attendance));
 
                         // 更新界面
                         const studentItem = document.getElementById(`${translateGrade(grade)}-${studentName}`);
@@ -187,6 +192,7 @@
             document.getElementById('studentName').value = '';
         });
 
+        // 初始化学生列表和签到数据
         initializeStudentsList();
     </script>
 
