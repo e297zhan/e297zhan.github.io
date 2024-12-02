@@ -101,6 +101,7 @@
 </div>
 
 <script>
+// Initial data for the grades and students
 const studentsByGrade = {
     '九年级': ["杨晓洋 Inmen", "崔真豪 Anthony", "房晚婷 Winerney", "方子玥 Feya", "李泽宇 Robert", "朱士琦 Alex"],
     '十年级': ["闫若妤", "沈子琦 Jason", "黄粲雯 Crystal", "刘奕孜 Linda"],
@@ -108,11 +109,11 @@ const studentsByGrade = {
     '十二年级': ["杨子沫 Chole", "吕佳欣 Mickley", "颜培裕熙 Lucky"]
 };
 
-// Load data from storage or initialize empty structures
+// Load data from localStorage (if any)
 let attendance = JSON.parse(localStorage.getItem('attendanceData')) || {};
 let weeklySummary = JSON.parse(localStorage.getItem('weeklySummary')) || {};
 
-// Initialize student lists
+// Function to initialize the students' list and attendance
 function initializeStudentsList() {
     document.querySelectorAll('.list').forEach(list => list.innerHTML = '');
 
@@ -124,14 +125,13 @@ function initializeStudentsList() {
             const li = document.createElement('li');
             li.textContent = student;
 
+            // Check if the student is marked as attended
             if (attendance[grade]?.[student]) {
-                // Display attended students
                 const attendedLi = document.createElement('li');
                 attendedLi.textContent = `${student} - 签到时间: ${attendance[grade][student].time}`;
                 attendedLi.classList.add('attended');
                 gradeAttendanceList.appendChild(attendedLi);
             } else {
-                // Display unattended students
                 gradeList.appendChild(li);
             }
         });
@@ -139,20 +139,23 @@ function initializeStudentsList() {
     updateWeeklySummary();
 }
 
-// Form submission handler
+// Submit form handler for marking attendance
 document.getElementById('attendanceForm').addEventListener('submit', function(event) {
     event.preventDefault();
     const studentName = document.getElementById('studentName').value.trim();
     const currentTime = new Date().toLocaleTimeString();
     
+    // Mark attendance for the student if found
     for (let grade in studentsByGrade) {
         if (studentsByGrade[grade].includes(studentName)) {
             if (!attendance[grade]) attendance[grade] = {};
             if (!attendance[grade][studentName]) {
                 attendance[grade][studentName] = { time: currentTime };
+                
                 // Update weekly summary
                 updateWeeklySummaryData(grade, studentName, true);
                 saveAttendance();
+                saveWeeklySummary();
                 initializeStudentsList();
             } else {
                 alert(`${studentName} 已经签到过了!`);
@@ -163,7 +166,7 @@ document.getElementById('attendanceForm').addEventListener('submit', function(ev
     alert("未找到该学生或该学生已签到！");
 });
 
-// Update weekly summary
+// Update the weekly summary statistics
 function updateWeeklySummary() {
     const weeklySummaryList = document.getElementById('weeklySummaryList');
     weeklySummaryList.innerHTML = '';
@@ -178,7 +181,7 @@ function updateWeeklySummary() {
     }
 }
 
-// Update weekly summary data
+// Update weekly summary for a student's attendance status
 function updateWeeklySummaryData(grade, student, isCheckedIn) {
     if (!weeklySummary[grade]) weeklySummary[grade] = {};
     if (!weeklySummary[grade][student]) {
@@ -194,24 +197,26 @@ function updateWeeklySummaryData(grade, student, isCheckedIn) {
     saveWeeklySummary();
 }
 
-// Save data to local storage
+// Save attendance data to localStorage
 function saveAttendance() {
     localStorage.setItem('attendanceData', JSON.stringify(attendance));
 }
 
+// Save weekly summary data to localStorage
 function saveWeeklySummary() {
     localStorage.setItem('weeklySummary', JSON.stringify(weeklySummary));
 }
 
-// Translate grade names to IDs
+// Helper function to translate grade names to DOM IDs
 function translateGrade(grade) {
     return grade === '九年级' ? 'grade9' :
            grade === '十年级' ? 'grade10' :
            grade === '十一年级' ? 'grade11' : 'grade12';
 }
 
-// Initialize page
+// Initialize page on load
 initializeStudentsList();
 </script>
+
 </body>
 </html>
