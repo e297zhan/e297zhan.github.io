@@ -101,7 +101,7 @@
 </div>
 
 <script>
-// Initial data for the grades and students
+// Initialize student data by grade
 const studentsByGrade = {
     '九年级': ["杨晓洋 Inmen", "崔真豪 Anthony", "房晚婷 Winerney", "方子玥 Feya", "李泽宇 Robert", "朱士琦 Alex"],
     '十年级': ["闫若妤", "沈子琦 Jason", "黄粲雯 Crystal", "刘奕孜 Linda"],
@@ -109,11 +109,11 @@ const studentsByGrade = {
     '十二年级': ["杨子沫 Chole", "吕佳欣 Mickley", "颜培裕熙 Lucky"]
 };
 
-// Load data from localStorage (if any)
+// Load attendance and weekly summary from localStorage, or initialize as empty objects if not found
 let attendance = JSON.parse(localStorage.getItem('attendanceData')) || {};
 let weeklySummary = JSON.parse(localStorage.getItem('weeklySummary')) || {};
 
-// Function to initialize the students' list and attendance
+// Function to initialize the students' list and attendance on page load
 function initializeStudentsList() {
     document.querySelectorAll('.list').forEach(list => list.innerHTML = '');
 
@@ -125,7 +125,7 @@ function initializeStudentsList() {
             const li = document.createElement('li');
             li.textContent = student;
 
-            // Check if the student is marked as attended
+            // Check if the student has signed in
             if (attendance[grade]?.[student]) {
                 const attendedLi = document.createElement('li');
                 attendedLi.textContent = `${student} - 签到时间: ${attendance[grade][student].time}`;
@@ -139,34 +139,42 @@ function initializeStudentsList() {
     updateWeeklySummary();
 }
 
-// Submit form handler for marking attendance
+// Handle form submission to mark attendance
 document.getElementById('attendanceForm').addEventListener('submit', function(event) {
     event.preventDefault();
     const studentName = document.getElementById('studentName').value.trim();
     const currentTime = new Date().toLocaleTimeString();
     
-    // Mark attendance for the student if found
+    let markedAttendance = false;
+
+    // Find the student in the grades and mark attendance
     for (let grade in studentsByGrade) {
         if (studentsByGrade[grade].includes(studentName)) {
             if (!attendance[grade]) attendance[grade] = {};
             if (!attendance[grade][studentName]) {
                 attendance[grade][studentName] = { time: currentTime };
-                
+                markedAttendance = true;
+
                 // Update weekly summary
                 updateWeeklySummaryData(grade, studentName, true);
-                saveAttendance();
-                saveWeeklySummary();
-                initializeStudentsList();
+                break;
             } else {
                 alert(`${studentName} 已经签到过了!`);
             }
-            return;
         }
     }
-    alert("未找到该学生或该学生已签到！");
+
+    // Save and update lists if attendance was marked
+    if (markedAttendance) {
+        saveAttendance();
+        saveWeeklySummary();
+        initializeStudentsList();
+    } else {
+        alert("未找到该学生！");
+    }
 });
 
-// Update the weekly summary statistics
+// Update the weekly summary with attendance counts
 function updateWeeklySummary() {
     const weeklySummaryList = document.getElementById('weeklySummaryList');
     weeklySummaryList.innerHTML = '';
