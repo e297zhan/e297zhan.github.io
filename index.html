@@ -102,29 +102,29 @@ const studentsByGrade = {
     '十二年级': ["杨子沫 Chole", "吕佳欣 Mickley", "颜培裕熙 Lucky"]
 };
 
-// 从 sessionStorage 获取签到数据
-function getAttendanceFromSessionStorage() {
+// 从 localStorage 获取签到数据
+function getAttendanceFromLocalStorage() {
     try {
-        const data = sessionStorage.getItem('attendanceData');
+        const data = localStorage.getItem('attendanceData');
         return data ? JSON.parse(data) : {};
     } catch (e) {
-        console.error('从 sessionStorage 加载时出错:', e);
+        console.error('从 localStorage 加载时出错:', e);
         return {};
     }
 }
 
-// 保存签到数据到 sessionStorage
-function saveAttendanceToSessionStorage() {
+// 保存签到数据到 localStorage
+function saveAttendanceToLocalStorage() {
     try {
-        sessionStorage.setItem('attendanceData', JSON.stringify(attendance));
-        console.log('考勤数据保存到 sessionStorage。');
+        localStorage.setItem('attendanceData', JSON.stringify(attendance));
+        console.log('考勤数据保存到 localStorage。');
     } catch (e) {
-        console.error('保存到 sessionStorage 时出错：', e);
+        console.error('保存到 localStorage 时出错：', e);
     }
 }
 
 // 初始化签到数据
-const attendance = getAttendanceFromSessionStorage();
+const attendance = getAttendanceFromLocalStorage();
 
 // 初始化学生列表
 function initializeStudentsList() {
@@ -185,7 +185,7 @@ document.getElementById('attendanceForm').addEventListener('submit', function(ev
             attendLi.textContent = `${studentName} - 签到时间: ${currentTime} - 签到地点: ${location}`;
             attendLi.classList.add('attended');
             gradeAttendanceList.appendChild(attendLi);
-            saveAttendanceToSessionStorage();  // 保存到 sessionStorage
+            saveAttendanceToLocalStorage();  // 保存到 localStorage
             found = true;
             break;
         }
