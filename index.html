@@ -111,27 +111,12 @@ const studentsByGrade = {
     '十二年级': ["杨子沫 Chole", "吕佳欣 Mickley", "颜培裕熙 Lucky"]
 };
 
-const attendance = getAttendanceFromSessionStorage();
-const todayDate = new Date().toLocaleDateString(); // Current date in locale format
-
 // Load attendance data from storage
-function getAttendanceFromSessionStorage() {
-    try {
-        const data = sessionStorage.getItem('attendanceData');
-        return data ? JSON.parse(data) : {};
-    } catch (e) {
-        console.error('Error loading from sessionStorage:', e);
-        return {};
-    }
-}
+const attendance = JSON.parse(sessionStorage.getItem('attendanceData')) || {};
 
 // Save data to storage
 function saveAttendanceToSessionStorage() {
-    try {
-        sessionStorage.setItem('attendanceData', JSON.stringify(attendance));
-    } catch (e) {
-        console.error('Error saving to sessionStorage:', e);
-    }
+    sessionStorage.setItem('attendanceData', JSON.stringify(attendance));
 }
 
 // Initialize student lists
@@ -139,17 +124,16 @@ function initializeStudentsList() {
     for (let grade in studentsByGrade) {
         const gradeList = document.getElementById(`${translateGrade(grade)}List`);
         const gradeAttendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
-
-        gradeList.innerHTML = '';  // Clear previous entries
+        gradeList.innerHTML = '';
         gradeAttendanceList.innerHTML = '';
 
         studentsByGrade[grade].forEach(student => {
             const li = document.createElement('li');
             li.textContent = student;
 
-            if (attendance[grade] && attendance[grade][student]) {
+            if (attendance[grade]?.[student]?.some(entry => isCurrentWeek(new Date(entry.date)))) {
                 const attendedLi = document.createElement('li');
-                attendedLi.textContent = `${student} - 签到时间: ${attendance[grade][student][attendance[grade][student].length - 1].time}`;
+                attendedLi.textContent = `${student} - 签到时间: ${attendance[grade][student].slice(-1)[0].time}`;
                 attendedLi.classList.add('attended');
                 gradeAttendanceList.appendChild(attendedLi);
             } else {
@@ -157,7 +141,7 @@ function initializeStudentsList() {
             }
         });
     }
-    updateWeeklySummary();  // Update weekly summary when initializing
+    updateWeeklySummary();
 }
 
 // Handle form submission
@@ -165,13 +149,14 @@ document.getElementById('attendanceForm').addEventListener('submit', function(ev
     event.preventDefault();
     const studentName = document.getElementById('studentName').value.trim();
     const currentTime = new Date().toLocaleTimeString();
+    const currentDate = new Date().toISOString().split('T')[0];
 
     for (let grade in studentsByGrade) {
         if (studentsByGrade[grade].includes(studentName)) {
             attendance[grade] = attendance[grade] || {};
             attendance[grade][studentName] = attendance[grade][studentName] || [];
-            attendance[grade][studentName].push({ date: todayDate, time: currentTime });
-            
+            attendance[grade][studentName].push({ date: currentDate, time: currentTime });
+
             saveAttendanceToSessionStorage();
             initializeStudentsList();
             return;
@@ -190,7 +175,7 @@ function translateGrade(grade) {
 // Update weekly summary display
 function updateWeeklySummary() {
     const weeklySummaryList = document.getElementById('weeklySummaryList');
-    weeklySummaryList.innerHTML = ''; // Clear previous summary
+    weeklySummaryList.innerHTML = ''; 
 
     for (let grade in studentsByGrade) {
         studentsByGrade[grade].forEach(student => {
@@ -206,16 +191,15 @@ function updateWeeklySummary() {
 
 // Check if a date falls within the current week
 function isCurrentWeek(date) {
-    const currentDate = new Date();
-    const firstDayOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay()));
+    const today = new Date();
+    const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
     firstDayOfWeek.setHours(0, 0, 0, 0);
     const lastDayOfWeek = new Date(firstDayOfWeek);
     lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
     return date >= firstDayOfWeek && date <= lastDayOfWeek;
 }
 
-initializeStudentsList();  // Initialize on page load
+initializeStudentsList();
 </script>
-
 </body>
 </html>
