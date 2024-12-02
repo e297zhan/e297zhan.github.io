@@ -108,16 +108,12 @@ const studentsByGrade = {
     '十二年级': ["杨子沫 Chole", "吕佳欣 Mickley", "颜培裕熙 Lucky"]
 };
 
-// Load data from storage
+// Load data from storage or initialize empty structures
 let attendance = JSON.parse(localStorage.getItem('attendanceData')) || {};
-let lastDailyUpdate = localStorage.getItem('lastDailyUpdate') || "";
 let weeklySummary = JSON.parse(localStorage.getItem('weeklySummary')) || {};
 
 // Initialize student lists
 function initializeStudentsList() {
-    checkAndUpdateDaily();
-    checkAndUpdateWeekly();
-    
     document.querySelectorAll('.list').forEach(list => list.innerHTML = '');
 
     for (let grade in studentsByGrade) {
@@ -128,12 +124,14 @@ function initializeStudentsList() {
             const li = document.createElement('li');
             li.textContent = student;
 
-            if (attendance[grade]?.[student]?.today) {
+            if (attendance[grade]?.[student]) {
+                // Display attended students
                 const attendedLi = document.createElement('li');
                 attendedLi.textContent = `${student} - 签到时间: ${attendance[grade][student].time}`;
                 attendedLi.classList.add('attended');
                 gradeAttendanceList.appendChild(attendedLi);
             } else {
+                // Display unattended students
                 gradeList.appendChild(li);
             }
         });
@@ -141,74 +139,41 @@ function initializeStudentsList() {
     updateWeeklySummary();
 }
 
-// Form submission
+// Form submission handler
 document.getElementById('attendanceForm').addEventListener('submit', function(event) {
     event.preventDefault();
     const studentName = document.getElementById('studentName').value.trim();
     const currentTime = new Date().toLocaleTimeString();
-    const today = new Date().toISOString().split('T')[0];
-
+    
     for (let grade in studentsByGrade) {
         if (studentsByGrade[grade].includes(studentName)) {
-            attendance[grade] = attendance[grade] || {};
-            attendance[grade][studentName] = { today, time: currentTime };
-
-            saveAttendance();
-            initializeStudentsList();
+            if (!attendance[grade]) attendance[grade] = {};
+            if (!attendance[grade][studentName]) {
+                attendance[grade][studentName] = { time: currentTime };
+                saveAttendance();
+                initializeStudentsList();
+            } else {
+                alert(`${studentName} 已经签到过了!`);
+            }
             return;
         }
     }
     alert("未找到该学生或该学生已签到！");
 });
 
-// Translate grade names to ID
+// Save data to local storage
+function saveAttendance() {
+    localStorage.setItem('attendanceData', JSON.stringify(attendance));
+}
+
+// Translate grade names to IDs
 function translateGrade(grade) {
     return grade === '九年级' ? 'grade9' :
            grade === '十年级' ? 'grade10' :
            grade === '十一年级' ? 'grade11' : 'grade12';
 }
 
-// Save data
-function saveAttendance() {
-    localStorage.setItem('attendanceData', JSON.stringify(attendance));
-    localStorage.setItem('weeklySummary', JSON.stringify(attendance));  // Ensure weekly data matches attendance
-}
-
-// Daily reset
-function checkAndUpdateDaily() {
-    const today = new Date().toISOString().split('T')[0];
-    if (lastDailyUpdate !== today) {
-        attendance = {};  // Reset attendance daily
-        lastDailyUpdate = today;
-        localStorage.setItem('lastDailyUpdate', today);
-        saveAttendance();
-    }
-}
-
-// Weekly reset
-function checkAndUpdateWeekly() {
-    const week = new Date().getWeek();
-    if (lastWeeklyUpdate !== week) {
-        weeklySummary = {};
-        lastWeeklyUpdate = week;
-        localStorage.setItem('lastWeeklyUpdate', week);
-    }
-}
-
-// Weekly summary update
-function updateWeeklySummary() {
-    const weeklySummaryList = document.getElementById('weeklySummaryList');
-    weeklySummaryList.innerHTML = '';
-
-    for (let grade in studentsByGrade) {
-        studentsByGrade[grade].forEach(student => {
-            const li = document.createElement('li');
-            li.textContent = `${student}: ${(weeklySummary[grade]?.[student]) ? 1 : 0} 次`;
-            weeklySummaryList.appendChild(li);
-        });
-    }
-}
-
+// Initialize page
 initializeStudentsList();
 </script>
 </body>
