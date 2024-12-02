@@ -207,12 +207,20 @@ function updateWeeklySummaryData(grade, student, isCheckedIn) {
 
 // Save attendance data to localStorage
 function saveAttendance() {
-    localStorage.setItem('attendanceData', JSON.stringify(attendance));
+    try {
+        localStorage.setItem('attendanceData', JSON.stringify(attendance));
+    } catch (e) {
+        console.error('Error saving attendance data: ', e);
+    }
 }
 
 // Save weekly summary data to localStorage
 function saveWeeklySummary() {
-    localStorage.setItem('weeklySummary', JSON.stringify(weeklySummary));
+    try {
+        localStorage.setItem('weeklySummary', JSON.stringify(weeklySummary));
+    } catch (e) {
+        console.error('Error saving weekly summary: ', e);
+    }
 }
 
 // Helper function to translate grade names to DOM IDs
@@ -222,7 +230,7 @@ function translateGrade(grade) {
            grade === '十一年级' ? 'grade11' : 'grade12';
 }
 
-// Initialize page on load
+// Initialize on page load
 initializeStudentsList();
 </script>
 
