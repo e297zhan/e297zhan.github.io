@@ -111,19 +111,6 @@
         const today = new Date().toLocaleDateString();
         const attendance = getAttendanceFromSessionStorage();
 
-        // 获取周的日期数组
-        function getWeekDates() {
-            const todayDate = new Date();
-            const weekDates = [];
-            const firstDay = new Date(todayDate.setDate(todayDate.getDate() - todayDate.getDay())); // 本周日
-            for (let i = 0; i < 7; i++) {
-                const day = new Date(firstDay);
-                day.setDate(firstDay.getDate() + i);
-                weekDates.push(day.toLocaleDateString());
-            }
-            return weekDates;
-        }
-
         function getAttendanceFromSessionStorage() {
             try {
                 const data = sessionStorage.getItem('attendanceData');
@@ -145,11 +132,23 @@
         function initializeStudentsList() {
             for (let grade in studentsByGrade) {
                 const gradeList = document.getElementById(`${translateGrade(grade)}List`);
+                const gradeAttendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
+                
+                gradeList.innerHTML = '';  // Clear previous entries
+                gradeAttendanceList.innerHTML = '';  // Clear previous entries
+                
                 studentsByGrade[grade].forEach(student => {
                     const li = document.createElement('li');
                     li.textContent = student;
-                    li.id = `${translateGrade(grade)}-${student}`;
-                    gradeList.appendChild(li);
+
+                    if (attendance[grade] && attendance[grade][student]) {
+                        const attendedLi = document.createElement('li');
+                        attendedLi.textContent = `${student} - 签到时间: ${attendance[grade][student][0].time}`;
+                        attendedLi.classList.add('attended');
+                        gradeAttendanceList.appendChild(attendedLi);
+                    } else {
+                        gradeList.appendChild(li);
+                    }
                 });
             }
         }
@@ -158,25 +157,18 @@
             event.preventDefault();
             const studentName = document.getElementById('studentName').value.trim();
             const currentTime = new Date().toLocaleTimeString();
-            const location = "北京汇贤学校";
 
             for (let grade in studentsByGrade) {
                 if (studentsByGrade[grade].includes(studentName)) {
                     attendance[grade] = attendance[grade] || {};
-                    attendance[grade][studentName] = attendance[grade][studentName] || [];
-                    attendance[grade][studentName].push({ date: today, time: currentTime, location });
+                    attendance[grade][studentName] = [{ time: currentTime }];
                     saveAttendanceToSessionStorage();
-                    updateAttendanceDisplay();
+                    initializeStudentsList();
                     return;
                 }
             }
             alert("未找到该学生或该学生已签到！");
         });
-
-        function updateAttendanceDisplay() {
-            initializeStudentsList();
-            calculateWeeklySummary();
-        }
 
         function translateGrade(grade) {
             return grade === '九年级' ? 'grade9' :
@@ -184,26 +176,7 @@
                    grade === '十一年级' ? 'grade11' : 'grade12';
         }
 
-        function calculateWeeklySummary() {
-            const summaryList = document.getElementById('weeklySummaryList');
-            summaryList.innerHTML = '';
-            const weekDates = getWeekDates();
-
-            for (let grade in studentsByGrade) {
-                studentsByGrade[grade].forEach(student => {
-                    const logs = (attendance[grade] && attendance[grade][student]) || [];
-                    const attendedDays = logs.filter(entry => weekDates.includes(entry.date)).length;
-                    const missedDays = weekDates.length - attendedDays;
-
-                    const li = document.createElement('li');
-                    li.textContent = `${student} - 已签到: ${attendedDays} 次, 未签到: ${missedDays} 次`;
-                    summaryList.appendChild(li);
-                });
-            }
-        }
-
         initializeStudentsList();
-        calculateWeeklySummary();
     </script>
 </body>
 </html>
