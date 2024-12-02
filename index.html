@@ -106,6 +106,7 @@ const studentsByGrade = {
 function getAttendanceFromLocalStorage() {
     try {
         const data = localStorage.getItem('attendanceData');
+        console.log('加载的考勤数据:', data); // Log data to check if it's being loaded
         return data ? JSON.parse(data) : {};
     } catch (e) {
         console.error('从 localStorage 加载时出错:', e);
@@ -125,6 +126,7 @@ function saveAttendanceToLocalStorage() {
 
 // 初始化签到数据
 const attendance = getAttendanceFromLocalStorage();
+console.log('当前考勤数据:', attendance); // Log current attendance data
 
 // 初始化学生列表
 function initializeStudentsList() {
@@ -185,6 +187,7 @@ document.getElementById('attendanceForm').addEventListener('submit', function(ev
             attendLi.textContent = `${studentName} - 签到时间: ${currentTime} - 签到地点: ${location}`;
             attendLi.classList.add('attended');
             gradeAttendanceList.appendChild(attendLi);
+
             saveAttendanceToLocalStorage();  // 保存到 localStorage
             found = true;
             break;
@@ -201,6 +204,5 @@ document.getElementById('attendanceForm').addEventListener('submit', function(ev
 // 初始化页面
 initializeStudentsList();
 </script>
-
 </body>
 </html>
