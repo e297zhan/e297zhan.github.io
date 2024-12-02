@@ -53,7 +53,7 @@
 
 <h1 style="text-align:center">学生签到系统</h1>
 
-<!-- Sign-in form -->
+<!-- 签到表单 -->
 <div class="section">
     <h2>签到表单</h2>
     <form id="attendanceForm">
@@ -63,7 +63,7 @@
 </div>
 
 <div class="container">
-    <!-- Grade sections -->
+    <!-- 年级签到状态 -->
     <div class="section" id="grade9">
         <h2>九年级</h2>
         <h3>未签到学生</h3>
@@ -94,29 +94,40 @@
     </div>
 </div>
 
-<!-- Weekly summary section -->
-<div class="section">
-    <h2>本周签到统计</h2>
-    <ul id="weeklySummaryList" class="list"></ul>
-</div>
-
 <script>
-// Initialize student data by grade
 const studentsByGrade = {
     '九年级': ["杨晓洋 Inmen", "崔真豪 Anthony", "房晚婷 Winerney", "方子玥 Feya", "李泽宇 Robert", "朱士琦 Alex"],
-    '十年级': ["闫若妤", "沈子琦 Jason", "黄粲雯 Crystal", "刘奕孜 Linda"],
-    '十一年级': ["陈科好 Tracy", "侯一诚 Finn", "宗亚歆 Yaxin"],
+    '十年级': ["闫若妤", "沈子琦 Jason", "黄粲雯 Crystal", "刘奕孜 Linda", "夏惟一 Eva", "杨思嘉 Sky", "苏楚涵 Cheron", "荀梦涵 Angelina", "任锦仪 Nina", "卢戴暄 Betty", "卢爱暄 Cynthia", "张楚妤 Nancy", "谢坦怀格尔"],
+    '十一年级': ["陈科好 Tracy", "侯一诚 Finn", "宗亚歆 Yaxin", "曾孟荀 Raina", "艾心 Lily"],
     '十二年级': ["杨子沫 Chole", "吕佳欣 Mickley", "颜培裕熙 Lucky"]
 };
 
-// Load attendance and weekly summary from localStorage, or initialize as empty objects if not found
-let attendance = JSON.parse(localStorage.getItem('attendanceData')) || {};
-let weeklySummary = JSON.parse(localStorage.getItem('weeklySummary')) || {};
+// 从 sessionStorage 获取签到数据
+function getAttendanceFromSessionStorage() {
+    try {
+        const data = sessionStorage.getItem('attendanceData');
+        return data ? JSON.parse(data) : {};
+    } catch (e) {
+        console.error('从 sessionStorage 加载时出错:', e);
+        return {};
+    }
+}
 
-// Function to initialize the students' list and attendance on page load
+// 保存签到数据到 sessionStorage
+function saveAttendanceToSessionStorage() {
+    try {
+        sessionStorage.setItem('attendanceData', JSON.stringify(attendance));
+        console.log('考勤数据保存到 sessionStorage。');
+    } catch (e) {
+        console.error('保存到 sessionStorage 时出错：', e);
+    }
+}
+
+// 初始化签到数据
+const attendance = getAttendanceFromSessionStorage();
+
+// 初始化学生列表
 function initializeStudentsList() {
-    document.querySelectorAll('.list').forEach(list => list.innerHTML = '');
-
     for (let grade in studentsByGrade) {
         const gradeList = document.getElementById(`${translateGrade(grade)}List`);
         const gradeAttendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
@@ -124,113 +135,70 @@ function initializeStudentsList() {
         studentsByGrade[grade].forEach(student => {
             const li = document.createElement('li');
             li.textContent = student;
+            li.id = `${translateGrade(grade)}-${student}`;
+            gradeList.appendChild(li);
 
-            // Check if the student has signed in
-            if (attendance[grade]?.[student]) {
-                const attendedLi = document.createElement('li');
-                attendedLi.textContent = `${student} - 签到时间: ${attendance[grade][student].time}`;
-                attendedLi.classList.add('attended');
-                gradeAttendanceList.appendChild(attendedLi);
-            } else {
-                gradeList.appendChild(li);
+            // 如果学生已经签到，移动到已签到列表
+            if (attendance[grade] && attendance[grade][student]) {
+                const attendLi = document.createElement('li');
+                const { time, location } = attendance[grade][student];
+                attendLi.classList.add('attended');
+                attendLi.textContent = `${student} - 签到时间: ${time} - 签到地点: ${location}`;
+                gradeAttendanceList.appendChild(attendLi);
+                li.style.backgroundColor = '#d4edda';  // 标记为已签到
+                li.remove();  // 从未签到列表移除
             }
         });
     }
-    updateWeeklySummary();
 }
 
-// Handle form submission to mark attendance
-document.getElementById('attendanceForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-    const studentName = document.getElementById('studentName').value.trim();
-    const currentTime = new Date().toLocaleTimeString();
-    
-    let markedAttendance = false;
-
-    // Find the student in the grades and mark attendance
-    for (let grade in studentsByGrade) {
-        if (studentsByGrade[grade].includes(studentName)) {
-            if (!attendance[grade]) attendance[grade] = {};
-            if (!attendance[grade][studentName]) {
-                attendance[grade][studentName] = { time: currentTime };
-                markedAttendance = true;
-
-                // Update weekly summary
-                updateWeeklySummaryData(grade, studentName, true);
-                break;
-            } else {
-                alert(`${studentName} 已经签到过了!`);
-            }
-        }
-    }
-
-    // Save and update lists if attendance was marked
-    if (markedAttendance) {
-        saveAttendance();
-        saveWeeklySummary();
-        initializeStudentsList();
-    } else {
-        alert("未找到该学生！");
-    }
-});
-
-// Update the weekly summary with attendance counts
-function updateWeeklySummary() {
-    const weeklySummaryList = document.getElementById('weeklySummaryList');
-    weeklySummaryList.innerHTML = '';
-
-    for (let grade in weeklySummary) {
-        const gradeSummary = weeklySummary[grade];
-        for (let student in gradeSummary) {
-            const li = document.createElement('li');
-            li.textContent = `${student} 本周签到: ${gradeSummary[student].checkedIn} 次, 未签到: ${gradeSummary[student].missed} 次`;
-            weeklySummaryList.appendChild(li);
-        }
-    }
-}
-
-// Update weekly summary for a student's attendance status
-function updateWeeklySummaryData(grade, student, isCheckedIn) {
-    if (!weeklySummary[grade]) weeklySummary[grade] = {};
-    if (!weeklySummary[grade][student]) {
-        weeklySummary[grade][student] = { checkedIn: 0, missed: 0 };
-    }
-
-    if (isCheckedIn) {
-        weeklySummary[grade][student].checkedIn++;
-    } else {
-        weeklySummary[grade][student].missed++;
-    }
-
-    saveWeeklySummary();
-}
-
-// Save attendance data to localStorage
-function saveAttendance() {
-    try {
-        localStorage.setItem('attendanceData', JSON.stringify(attendance));
-    } catch (e) {
-        console.error('Error saving attendance data: ', e);
-    }
-}
-
-// Save weekly summary data to localStorage
-function saveWeeklySummary() {
-    try {
-        localStorage.setItem('weeklySummary', JSON.stringify(weeklySummary));
-    } catch (e) {
-        console.error('Error saving weekly summary: ', e);
-    }
-}
-
-// Helper function to translate grade names to DOM IDs
+// 翻译年级名称
 function translateGrade(grade) {
     return grade === '九年级' ? 'grade9' :
            grade === '十年级' ? 'grade10' :
            grade === '十一年级' ? 'grade11' : 'grade12';
 }
 
-// Initialize on page load
+// 提交签到
+document.getElementById('attendanceForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const studentName = document.getElementById('studentName').value.trim();
+    const currentTime = new Date().toLocaleTimeString();
+    const location = "北京汇贤学校";  // 设置签到地点
+    let found = false;
+
+    for (let grade in studentsByGrade) {
+        if (studentsByGrade[grade].includes(studentName) && !(attendance[grade] && attendance[grade][studentName])) {
+            attendance[grade] = attendance[grade] || {};
+            attendance[grade][studentName] = { time: currentTime, location };
+
+            // 更新页面
+            const gradeList = document.getElementById(`${translateGrade(grade)}List`);
+            const gradeAttendanceList = document.getElementById(`${translateGrade(grade)}Attendance`);
+            const li = document.getElementById(`${translateGrade(grade)}-${studentName}`);
+
+            if (li) {
+                li.remove();  // 从未签到列表移除
+            }
+
+            const attendLi = document.createElement('li');
+            attendLi.textContent = `${studentName} - 签到时间: ${currentTime} - 签到地点: ${location}`;
+            attendLi.classList.add('attended');
+            gradeAttendanceList.appendChild(attendLi);
+            saveAttendanceToSessionStorage();  // 保存到 sessionStorage
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        alert("未找到该学生或该学生已签到！");
+    }
+
+    document.getElementById('studentName').value = '';  // 清空输入框
+});
+
+// 初始化页面
 initializeStudentsList();
 </script>
 
