@@ -71,8 +71,27 @@
         <h3>已签到学生</h3>
         <ul id="grade9Attendance" class="list"></ul>
     </div>
-
-    <!-- Additional grade sections (grade10, grade11, grade12) omitted for brevity -->
+    <div class="section" id="grade10">
+        <h2>十年级</h2>
+        <h3>未签到学生</h3>
+        <ul id="grade10List" class="list"></ul>
+        <h3>已签到学生</h3>
+        <ul id="grade10Attendance" class="list"></ul>
+    </div>
+    <div class="section" id="grade11">
+        <h2>十一年级</h2>
+        <h3>未签到学生</h3>
+        <ul id="grade11List" class="list"></ul>
+        <h3>已签到学生</h3>
+        <ul id="grade11Attendance" class="list"></ul>
+    </div>
+    <div class="section" id="grade12">
+        <h2>十二年级</h2>
+        <h3>未签到学生</h3>
+        <ul id="grade12List" class="list"></ul>
+        <h3>已签到学生</h3>
+        <ul id="grade12Attendance" class="list"></ul>
+    </div>
 </div>
 
 <!-- Weekly summary section -->
@@ -84,20 +103,21 @@
 <script>
 const studentsByGrade = {
     '九年级': ["杨晓洋 Inmen", "崔真豪 Anthony", "房晚婷 Winerney", "方子玥 Feya", "李泽宇 Robert", "朱士琦 Alex"],
-    // Add other grades here...
+    '十年级': ["闫若妤", "沈子琦 Jason", "黄粲雯 Crystal", "刘奕孜 Linda"],
+    '十一年级': ["陈科好 Tracy", "侯一诚 Finn", "宗亚歆 Yaxin"],
+    '十二年级': ["杨子沫 Chole", "吕佳欣 Mickley", "颜培裕熙 Lucky"]
 };
 
 // Load data from storage
 let attendance = JSON.parse(localStorage.getItem('attendanceData')) || {};
 let lastDailyUpdate = localStorage.getItem('lastDailyUpdate') || "";
-let lastWeeklyUpdate = localStorage.getItem('lastWeeklyUpdate') || "";
+let weeklySummary = JSON.parse(localStorage.getItem('weeklySummary')) || {};
 
 // Initialize student lists
 function initializeStudentsList() {
     checkAndUpdateDaily();
     checkAndUpdateWeekly();
     
-    // Clear previous lists
     document.querySelectorAll('.list').forEach(list => list.innerHTML = '');
 
     for (let grade in studentsByGrade) {
@@ -151,55 +171,42 @@ function translateGrade(grade) {
 // Save data
 function saveAttendance() {
     localStorage.setItem('attendanceData', JSON.stringify(attendance));
-    localStorage.setItem('lastDailyUpdate', new Date().toISOString().split('T')[0]);
+    localStorage.setItem('weeklySummary', JSON.stringify(attendance));  // Ensure weekly data matches attendance
 }
 
 // Daily reset
 function checkAndUpdateDaily() {
     const today = new Date().toISOString().split('T')[0];
     if (lastDailyUpdate !== today) {
-        // Clear daily attendance
-        for (let grade in attendance) {
-            for (let student in attendance[grade]) {
-                delete attendance[grade][student];
-            }
-        }
+        attendance = {};  // Reset attendance daily
         lastDailyUpdate = today;
+        localStorage.setItem('lastDailyUpdate', today);
         saveAttendance();
     }
 }
 
 // Weekly reset
 function checkAndUpdateWeekly() {
-    const currentWeek = getWeekNumber(new Date());
-    if (lastWeeklyUpdate !== currentWeek) {
-        localStorage.setItem('weeklySummary', JSON.stringify(attendance));
-        lastWeeklyUpdate = currentWeek;
-        localStorage.setItem('lastWeeklyUpdate', currentWeek);
+    const week = new Date().getWeek();
+    if (lastWeeklyUpdate !== week) {
+        weeklySummary = {};
+        lastWeeklyUpdate = week;
+        localStorage.setItem('lastWeeklyUpdate', week);
     }
 }
 
 // Weekly summary update
 function updateWeeklySummary() {
-    const weeklySummary = JSON.parse(localStorage.getItem('weeklySummary')) || {};
     const weeklySummaryList = document.getElementById('weeklySummaryList');
     weeklySummaryList.innerHTML = '';
 
     for (let grade in studentsByGrade) {
         studentsByGrade[grade].forEach(student => {
-            const count = (weeklySummary[grade]?.[student]) ? 1 : 0;
             const li = document.createElement('li');
-            li.textContent = `${student} (${grade}): 本周签到 ${count} 次`;
+            li.textContent = `${student}: ${(weeklySummary[grade]?.[student]) ? 1 : 0} 次`;
             weeklySummaryList.appendChild(li);
         });
     }
-}
-
-// Get week number
-function getWeekNumber(date) {
-    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-    const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
-    return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
 }
 
 initializeStudentsList();
