@@ -150,6 +150,8 @@ document.getElementById('attendanceForm').addEventListener('submit', function(ev
             if (!attendance[grade]) attendance[grade] = {};
             if (!attendance[grade][studentName]) {
                 attendance[grade][studentName] = { time: currentTime };
+                // Update weekly summary
+                updateWeeklySummaryData(grade, studentName, true);
                 saveAttendance();
                 initializeStudentsList();
             } else {
@@ -161,9 +163,44 @@ document.getElementById('attendanceForm').addEventListener('submit', function(ev
     alert("未找到该学生或该学生已签到！");
 });
 
+// Update weekly summary
+function updateWeeklySummary() {
+    const weeklySummaryList = document.getElementById('weeklySummaryList');
+    weeklySummaryList.innerHTML = '';
+
+    for (let grade in weeklySummary) {
+        const gradeSummary = weeklySummary[grade];
+        for (let student in gradeSummary) {
+            const li = document.createElement('li');
+            li.textContent = `${student} 本周签到: ${gradeSummary[student].checkedIn} 次, 未签到: ${gradeSummary[student].missed} 次`;
+            weeklySummaryList.appendChild(li);
+        }
+    }
+}
+
+// Update weekly summary data
+function updateWeeklySummaryData(grade, student, isCheckedIn) {
+    if (!weeklySummary[grade]) weeklySummary[grade] = {};
+    if (!weeklySummary[grade][student]) {
+        weeklySummary[grade][student] = { checkedIn: 0, missed: 0 };
+    }
+
+    if (isCheckedIn) {
+        weeklySummary[grade][student].checkedIn++;
+    } else {
+        weeklySummary[grade][student].missed++;
+    }
+
+    saveWeeklySummary();
+}
+
 // Save data to local storage
 function saveAttendance() {
     localStorage.setItem('attendanceData', JSON.stringify(attendance));
+}
+
+function saveWeeklySummary() {
+    localStorage.setItem('weeklySummary', JSON.stringify(weeklySummary));
 }
 
 // Translate grade names to IDs
